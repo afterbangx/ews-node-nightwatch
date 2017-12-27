@@ -1,0 +1,31 @@
+{
+    "src_folders": ["tests"],
+    "output_folder": "reports",
+    "selenium": {
+        "start_process": true,
+        "server_path": "bin/selenium-server-standalone-3.6.0.jar",
+        "port": 4444,
+        "log_path": "logs",
+        "cli_args": {
+            "webdriver.chrome.driver": "bin/chromedriver_2.34.exe"
+        }
+    },
+    "test_settings": {
+        "default": {
+            "launch_url": "https://localhost/login",
+            "selenium_port": 4444,
+            "silent": true,
+            "screenshots": {
+                "enabled": false
+            },
+            "desiredCapabilities": {
+                "browserName": "chrome"
+            },
+            "globals": {
+                "EWS_USER": "${EWS_USER}",
+                "EWS_PW": "${EWS_PW}",
+                "EWS_TIMEOUT_IN_SECONDS": "300"
+            }
+        }
+    }
+}
