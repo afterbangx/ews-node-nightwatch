@@ -15,24 +15,19 @@ module.exports = {
         const expectedSubject = 'Some subject';
         const expectedTestMessage = 'Some message that was sent.';
 
-        //look for email
-        let messageFound = false;
-        browser.perform(() => {
-            ews.fetchEmails(ews_user, ews_pw, timeout);
-        })
-        .perform(() => {            
-            let message = ews.getMessage();
-            
-            if(message.subject) {
+        browser.perform((done) => {
+            ews.fetchEmails(ews_user, ews_pw, timeout).then((message) => {
                 browser.verify.ok(message.subject.includes(expectedSubject), 
-                    `Expected email subject to contain: <${expectedSubject}>`); 
+                    `Expected subject to include: <${expectedSubject}>`); 
     
                 browser.verify.ok(message.body.includes(expectedTestMessage),
-                    `Expected email body to include: <${expectedTestMessage}>`);
-            } else {
-                browser.assert.fail('No message found.');
-            }           
-            
-        })
+                    `Expected body to include: <${expectedTestMessage}>`);
+                
+                done();
+            }, (err) => {
+                browser.assert.fail(err);
+                done();
+            });
+        });
     }
 }
