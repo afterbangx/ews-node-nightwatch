@@ -1,5 +1,4 @@
-const utils = require('./helpers/utils');
-const readEml = require('./helpers/read-eml');
+const ews = require('./helpers/ews');
 
 let ews_user, ews_pw, timeout;
 
@@ -19,20 +18,21 @@ module.exports = {
         //look for email
         let messageFound = false;
         browser.perform(() => {
-            messageFound = utils.fetchEmails(ews_user, ews_pw, timeout);
+            ews.fetchEmails(ews_user, ews_pw, timeout);
         })
-        .perform(() => {
-            if (messageFound) {
-                let message = readEml();
-        
+        .perform(() => {            
+            let message = ews.getMessage();
+            
+            if(message.subject) {
                 browser.verify.ok(message.subject.includes(expectedSubject), 
-                  `Expected email subject to contain: <${expectedSubject}>`); 
-        
+                    `Expected email subject to contain: <${expectedSubject}>`); 
+    
                 browser.verify.ok(message.body.includes(expectedTestMessage),
-                  `Expected email body to include: <${expectedTestMessage}>`);
+                    `Expected email body to include: <${expectedTestMessage}>`);
             } else {
-                browser.assert.fail('Message was not found within allotted time.');
-            }
+                browser.assert.fail('No message found.');
+            }           
+            
         })
     }
 }

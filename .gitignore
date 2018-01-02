@@ -1,6 +1,3 @@
 node_modules/
-bin/
-obj/
-export/
 logs/
 reports/
