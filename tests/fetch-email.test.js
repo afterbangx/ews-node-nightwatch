@@ -1,4 +1,5 @@
 const ews = require('./helpers/ews');
+const faker = require('faker');
 
 let ews_user, ews_pw, timeout;
 
@@ -12,11 +13,12 @@ module.exports = {
     },
 
     'Test example 1': (browser) => {
+        const uuid = faker.random.uuid();
         const expectedSubject = 'Some subject';
-        const expectedTestMessage = 'Some message that was sent.';
+        const expectedTestMessage = `This is a test: ${uuid}`;
 
         browser.perform((done) => {
-            ews.fetchEmails(ews_user, ews_pw, timeout).then((message) => {
+            ews.fetchEmails(ews_user, ews_pw, timeout, uuid).then((message) => {
                 browser.verify.ok(message.subject.includes(expectedSubject), 
                     `Expected subject to include: <${expectedSubject}>`); 
     

@@ -1,3 +1,5 @@
+import { EmailMessageSchema } from 'ews-javascript-api';
+
 const ews = require('ews-javascript-api');
 ews.EwsLogging.DebugLogEnabled = false;
 
@@ -9,25 +11,40 @@ let message = {
     attachments: []
 };
 
-function deleteItems(service, emails) {
+function deleteItem(service, email) {
     return new Promise((resolve, reject) => {
-        emails.forEach(email => {
-            ews.Item.Bind(service, email.Id).then((item) => {
+        ews.Item.Bind(service, email.Id).then((item) => {
                 item.Delete(ews.DeleteMode.MoveToDeletedItems)
                     .then(() => {
-                        console.log('message deleted...');
                         resolve();
                     }, err => {
                         reject('deleting message failed...');
                     });                
             });        
-        });
-    });        
+        });       
 };
+
+function markItemRead(service, email) {
+    return new Promise((resolve, reject) => {
+        const props = new ews.PropertySet(ews.BasePropertySet.IdOnly, ews.EmailMessageSchema.IsRead);
+
+        ews.EmailMessage.Bind(service, email.Id, props).then((emailmessage) => {
+            if(!emailmessage.IsRead) {
+                emailmessage.IsRead = true;
+                emailmessage.Update(ews.ConflictResolutionMode.AutoResolve)
+                    .then(() => {
+                        resolve();
+                    }, err => {
+                        reject('updating message failed...');
+                    });
+            }
+        });
+    });
+}
 
 module.exports = {
 
-    fetchEmails: (emailaddress, pw, timeout) => {
+    fetchEmails: (emailaddress, pw, timeout, uniqueID) => {
         return new Promise((resolve, reject) => {
             const RETRY_INTERVAL = 10;
             const MAX_RETRIES = timeout / RETRY_INTERVAL;
@@ -47,11 +64,10 @@ module.exports = {
                 const folderId = new ews.FolderId(ews.WellKnownFolderName.Inbox, sharedMailbox);
 
                 const filter = new ews.SearchFilter.IsEqualTo(ews.EmailMessageSchema.IsRead, false);
-                const view = new ews.ItemView(1);            
+                const view = new ews.ItemView();            
 
-                service.FindItems(folderId, filter, view).then((result) => {
-                    const items = result;
-
+                service.FindItems(folderId, filter, view).then((items) => {
+                    
                     if (items.TotalCount < 1) {
                         retryAttempts++;
 
@@ -71,16 +87,19 @@ module.exports = {
                             // console.log(items.Items[0].TextBody.Text);
                             // console.log(items.Items[0].Attachments.Items);
 
-                            message.subject = items.Items[0].Subject;
-                            message.body = items.Items[0].TextBody.Text;
+                            let testmail = items.Items
+                                .find(item => item.TextBody.Text.includes(uniqueID));
 
-                            if(items.Items[0].HasAttachments) {
-                                message.attachments = items.Items[0].Attachments.Items;
+                            message.subject = testmail.Subject;
+                            message.body = testmail.TextBody.Text;
+
+                            if(testmail.HasAttachments) {
+                                message.attachments = testmail.Attachments.Items;
                             }
 
-                            deleteItems(service, items.Items).then(() => {
+                            markItemRead(service, testmail).then(() => {
                                 resolve(message);
-                            });                            
+                            });                                                        
                         });                  
                     }      
                 });
