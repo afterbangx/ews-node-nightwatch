@@ -31,5 +31,29 @@ module.exports = {
                 done();
             });
         });
+    },
+
+    'Test example 2': (browser) => {
+        const uuid = faker.random.uuid();
+        const expectedSubject = 'Some subject';
+        const expectedTestMessage = `This is a test: ${uuid}`;
+
+        browser.perform((done) => {
+            ews.fetchEmails(ews_user, ews_pw, timeout, uuid).then((message) => {
+                const matcher = /https:\/\/.+\/login\?documentId=\d+/g;
+                const matches = message.body.match(matcher);
+
+                if(matches) {
+                    browser.assert.ok(matches.length === someNumber, `Expected ${someNumber} matches and got ${matches.length}`);
+                } else {
+                    browser.assert.fail('no matches found in message body');
+                }
+                
+                done();
+            }, (err) => {
+                browser.assert.fail(err);
+                done();
+            });
+        });
     }
 }
