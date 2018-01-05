@@ -70,6 +70,11 @@ module.exports = {
 
                     if (items.TotalCount < 1) {
                         retryAttempts++;
+
+                        if (retryAttempts === MAX_RETRIES) {
+                            stopInterval();
+                            reject('Message was not found within allotted time.');
+                        }
                     } else {
                         const propertySet = new ews.PropertySet(ews.BasePropertySet.FirstClassProperties, 
                             ews.EmailMessageSchema.TextBody);
@@ -105,16 +110,17 @@ module.exports = {
                                     resolve(message);
                                 });
                             } else {
-                                console.log('message not found, retrying...');
                                 retryAttempts++;
+
+                                if (retryAttempts === MAX_RETRIES) {
+                                    stopInterval();
+                                    reject('Message was not found within allotted time.');
+                                } else {
+                                    console.log('message not found, retrying...');
+                                }
                             }                            
                         });                  
-                    }
-                    
-                    if (retryAttempts === MAX_RETRIES) {
-                        stopInterval();
-                        reject('Message was not found within allotted time.');
-                    }                    
+                    }                 
                 });
             };           
         });                
